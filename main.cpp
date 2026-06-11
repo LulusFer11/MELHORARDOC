@@ -54,13 +54,17 @@ void mostrarComparacao(const Mat& original,
             resultadoExibir,
             comparacao);
 
-    namedWindow("Original | Resultado",
-                WINDOW_NORMAL);
+    namedWindow(
+            "Original | Resultado",
+            WINDOW_NORMAL
+    );
 
-    imshow("Original | Resultado",
-           comparacao);
+    imshow(
+            "Original | Resultado",
+            comparacao
+    );
 
-    waitKey(0);
+    waitKey(2000);
 
     destroyAllWindows();
 }
@@ -82,8 +86,10 @@ string gerarNomeArquivo()
     ss << "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas/";
 
     ss << "resultado_"
-       << put_time(&tempoLocal,
-                   "%Y-%m-%d_%H-%M-%S")
+       << put_time(
+               &tempoLocal,
+               "%Y-%m-%d_%H-%M-%S"
+       )
        << ".png";
 
     return ss.str();
@@ -92,13 +98,38 @@ string gerarNomeArquivo()
 int main() {
 
     Mat original = imread(
-        "C:/Users/Luiz Fernandes/Pictures/PROVA/TESTE.png"
+            "C:/Users/Luiz Fernandes/Pictures/PROVA/TESTE.png"
     );
 
     if (original.empty()) {
         cout << "Erro ao carregar imagem!" << endl;
         return 1;
     }
+
+    cout << "\n==================================\n";
+    cout << "Documento carregado com sucesso!\n";
+    cout << "Largura: "
+         << original.cols
+         << " px\n";
+
+    cout << "Altura: "
+         << original.rows
+         << " px\n";
+    cout << "==================================\n";
+
+    namedWindow(
+            "Imagem Carregada",
+            WINDOW_NORMAL
+    );
+
+    imshow(
+            "Imagem Carregada",
+            original
+    );
+
+    waitKey(2000);
+
+    destroyAllWindows();
 
     Mat resultado = original.clone();
 
@@ -119,15 +150,19 @@ int main() {
 
                 if(resultado.channels() == 3)
                 {
-                    cvtColor(resultado,
-                             resultado,
-                             COLOR_BGR2GRAY);
+                    cvtColor(
+                            resultado,
+                            resultado,
+                            COLOR_BGR2GRAY
+                    );
                 }
 
                 cout << "\nEscala de cinza aplicada!\n";
 
-                mostrarComparacao(original,
-                                  resultado);
+                mostrarComparacao(
+                        original,
+                        resultado
+                );
 
                 break;
             }
@@ -137,16 +172,18 @@ int main() {
                 ultimoEstado = resultado.clone();
 
                 resultado.convertTo(
-                    resultado,
-                    -1,
-                    1.2,
-                    0
+                        resultado,
+                        -1,
+                        1.2,
+                        0
                 );
 
                 cout << "\nContraste melhorado!\n";
 
-                mostrarComparacao(original,
-                                  resultado);
+                mostrarComparacao(
+                        original,
+                        resultado
+                );
 
                 break;
             }
@@ -159,9 +196,11 @@ int main() {
 
                 if(resultado.channels() == 3)
                 {
-                    cvtColor(resultado,
-                             cinza,
-                             COLOR_BGR2GRAY);
+                    cvtColor(
+                            resultado,
+                            cinza,
+                            COLOR_BGR2GRAY
+                    );
                 }
                 else
                 {
@@ -169,19 +208,21 @@ int main() {
                 }
 
                 adaptiveThreshold(
-                    cinza,
-                    resultado,
-                    255,
-                    ADAPTIVE_THRESH_GAUSSIAN_C,
-                    THRESH_BINARY,
-                    11,
-                    2
+                        cinza,
+                        resultado,
+                        255,
+                        ADAPTIVE_THRESH_GAUSSIAN_C,
+                        THRESH_BINARY,
+                        11,
+                        2
                 );
 
                 cout << "\nTexto destacado!\n";
 
-                mostrarComparacao(original,
-                                  resultado);
+                mostrarComparacao(
+                        original,
+                        resultado
+                );
 
                 break;
             }
@@ -191,34 +232,39 @@ int main() {
                 ultimoEstado = resultado.clone();
 
                 Mat kernel =
-                    (Mat_<float>(3,3) <<
-                     0,-1,0,
-                     -1,5,-1,
-                     0,-1,0);
+                        (Mat_<float>(3,3) <<
+                         0,-1,0,
+                         -1,5,-1,
+                         0,-1,0);
 
                 filter2D(
-                    resultado,
-                    resultado,
-                    resultado.depth(),
-                    kernel
+                        resultado,
+                        resultado,
+                        resultado.depth(),
+                        kernel
                 );
 
                 cout << "\nNitidez aplicada!\n";
 
-                mostrarComparacao(original,
-                                  resultado);
+                mostrarComparacao(
+                        original,
+                        resultado
+                );
 
                 break;
             }
 
             case 5: {
 
-                resultado = ultimoEstado.clone();
+                resultado =
+                        ultimoEstado.clone();
 
                 cout << "\nUltima acao desfeita!\n";
 
-                mostrarComparacao(original,
-                                  resultado);
+                mostrarComparacao(
+                        original,
+                        resultado
+                );
 
                 break;
             }
@@ -226,19 +272,21 @@ int main() {
             case 6: {
 
                 filesystem::create_directories(
-                    "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas"
+                        "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas"
                 );
 
-                string caminho = gerarNomeArquivo();
+                string caminho =
+                        gerarNomeArquivo();
 
-                if(imwrite(caminho,
-                           resultado))
+                if(imwrite(
+                        caminho,
+                        resultado))
                 {
-                    cout << "\n================================\n";
+                    cout << "\n==================================\n";
                     cout << "Imagem salva com sucesso!\n\n";
                     cout << "Arquivo:\n";
                     cout << caminho << endl;
-                    cout << "================================\n";
+                    cout << "==================================\n";
                 }
                 else
                 {
