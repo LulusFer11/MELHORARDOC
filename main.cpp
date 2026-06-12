@@ -8,102 +8,20 @@
 using namespace cv;
 using namespace std;
 
-void mostrarMenu() {
-    cout << "\n===== MELHORADOR DE DOCUMENTOS =====\n";
-    cout << "1 - Converter para escala de cinza\n";
-    cout << "2 - Melhorar contraste\n";
-    cout << "3 - Destacar texto\n";
-    cout << "4 - Aplicar nitidez\n";
-    cout << "5 - Desfazer ultima acao\n";
-    cout << "6 - Salvar imagem\n";
-    cout << "0 - Sair\n";
-    cout << "Escolha: ";
-}
+// Mensagem exibida na tela
+string mensagemStatus = "Documento carregado com sucesso!";
 
-void atualizarTela(const Mat& original,
-                   const Mat& resultado)
+// Instante em que a mensagem foi atualizada
+time_t tempoMensagem = time(nullptr);
+
+// Atualiza a mensagem exibida na janela
+void definirMensagem(const string& mensagem)
 {
-    Mat esquerda;
-    Mat direita;
-
-    if (original.channels() == 1)
-        cvtColor(original, esquerda, COLOR_GRAY2BGR);
-    else
-        esquerda = original.clone();
-
-    if (resultado.channels() == 1)
-        cvtColor(resultado, direita, COLOR_GRAY2BGR);
-    else
-        direita = resultado.clone();
-
-    resize(
-            esquerda,
-            esquerda,
-            Size(),
-            0.5,
-            0.5
-    );
-
-    resize(
-            direita,
-            direita,
-            Size(),
-            0.5,
-            0.5
-    );
-
-    copyMakeBorder(
-            esquerda,
-            esquerda,
-            60, 0, 0, 0,
-            BORDER_CONSTANT,
-            Scalar(0,0,0)
-    );
-
-    copyMakeBorder(
-            direita,
-            direita,
-            60, 0, 0, 0,
-            BORDER_CONSTANT,
-            Scalar(0,0,0)
-    );
-
-    putText(
-            esquerda,
-            "IMAGEM ORIGINAL",
-            Point(20,40),
-            FONT_HERSHEY_SIMPLEX,
-            0.9,
-            Scalar(0,255,0),
-            2
-    );
-
-    putText(
-            direita,
-            "IMAGEM MODIFICADA",
-            Point(20,40),
-            FONT_HERSHEY_SIMPLEX,
-            0.9,
-            Scalar(0,255,0),
-            2
-    );
-
-    Mat comparacao;
-
-    hconcat(
-            esquerda,
-            direita,
-            comparacao
-    );
-
-    imshow(
-            "Melhorador de Documentos",
-            comparacao
-    );
-
-    waitKey(1);
+    mensagemStatus = mensagem;
+    tempoMensagem = time(nullptr);
 }
 
+// Gera automaticamente o nome do arquivo com data e hora
 string gerarNomeArquivo()
 {
     auto agora = time(nullptr);
@@ -122,19 +40,135 @@ string gerarNomeArquivo()
 
     ss << "resultado_"
        << put_time(
-               &tempoLocal,
-               "%Y-%m-%d_%H-%M-%S"
-       )
+              &tempoLocal,
+              "%Y-%m-%d_%H-%M-%S")
        << ".png";
 
     return ss.str();
 }
+void atualizarTela(const Mat& original,
+                   const Mat& resultado)
+{
+    Mat esquerda;
+    Mat direita;
 
+    // Converte para BGR se estiver em escala de cinza
+    if(original.channels() == 1)
+        cvtColor(original, esquerda, COLOR_GRAY2BGR);
+    else
+        esquerda = original.clone();
+
+    if(resultado.channels() == 1)
+        cvtColor(resultado, direita, COLOR_GRAY2BGR);
+    else
+        direita = resultado.clone();
+
+    // Reduz tamanho das imagens
+    resize(
+            esquerda,
+            esquerda,
+            Size(),
+            0.5,
+            0.5);
+
+    resize(
+            direita,
+            direita,
+            Size(),
+            0.5,
+            0.5);
+
+    // Espaço superior para os títulos
+    copyMakeBorder(
+            esquerda,
+            esquerda,
+            60,0,0,0,
+            BORDER_CONSTANT,
+            Scalar(0,0,0));
+
+    copyMakeBorder(
+            direita,
+            direita,
+            60,0,0,0,
+            BORDER_CONSTANT,
+            Scalar(0,0,0));
+
+    // Títulos
+    putText(
+            esquerda,
+            "IMAGEM ORIGINAL",
+            Point(20,40),
+            FONT_HERSHEY_SIMPLEX,
+            0.9,
+            Scalar(0,255,0),
+            2);
+
+    putText(
+            direita,
+            "IMAGEM MODIFICADA",
+            Point(20,40),
+            FONT_HERSHEY_SIMPLEX,
+            0.9,
+            Scalar(0,255,0),
+            2);
+
+    // Junta as duas imagens
+    Mat comparacao;
+
+    hconcat(
+            esquerda,
+            direita,
+            comparacao);
+
+    // Barra inferior
+    copyMakeBorder(
+            comparacao,
+            comparacao,
+            0,
+            120,
+            0,
+            0,
+            BORDER_CONSTANT,
+            Scalar(20,20,20));
+
+    // Mensagem de status
+    putText(
+            comparacao,
+            mensagemStatus,
+            Point(20, comparacao.rows - 80),
+            FONT_HERSHEY_SIMPLEX,
+            0.8,
+            Scalar(0,255,255),
+            2);
+
+    // Primeira linha dos atalhos
+    putText(
+            comparacao,
+            "[C] Cinza   [K] Contraste   [T] Texto   [N] Nitidez",
+            Point(20, comparacao.rows - 45),
+            FONT_HERSHEY_SIMPLEX,
+            0.7,
+            Scalar(255,255,255),
+            2);
+
+    // Segunda linha dos atalhos
+    putText(
+            comparacao,
+            "[Z] Desfazer   [R] Restaurar   [S] Salvar   [ESC] Sair",
+            Point(20, comparacao.rows - 15),
+            FONT_HERSHEY_SIMPLEX,
+            0.7,
+            Scalar(255,255,255),
+            2);
+
+    imshow(
+            "Melhorador de Documentos",
+            comparacao);
+}
 int main()
 {
     Mat original = imread(
-            "C:/Users/Luiz Fernandes/Pictures/PROVA/TESTE.png"
-    );
+            "C:/Users/Luiz Fernandes/Pictures/PROVA/TESTE.png");
 
     if(original.empty())
     {
@@ -142,204 +176,178 @@ int main()
         return 1;
     }
 
-    cout << "\n==================================\n";
-    cout << "Documento carregado com sucesso!\n";
-    cout << "Largura: " << original.cols << " px\n";
-    cout << "Altura: " << original.rows << " px\n";
-    cout << "==================================\n";
-
     Mat resultado = original.clone();
     Mat ultimoEstado = resultado.clone();
 
     namedWindow(
-        "Melhorador de Documentos",
-        WINDOW_NORMAL
-);
+            "Melhorador de Documentos",
+            WINDOW_NORMAL);
 
     resizeWindow(
             "Melhorador de Documentos",
             1400,
-            800
-    );
+            800);
+
     atualizarTela(
             original,
-            resultado
-    );
+            resultado);
 
-    int opcao;
-
-    do
+    while(true)
     {
-        mostrarMenu();
-        cin >> opcao;
+        int tecla = waitKey(30);
 
-        switch(opcao)
+        // ESC = sair
+        if(tecla == 27)
         {
-            case 1:
-            {
-                ultimoEstado = resultado.clone();
-
-                if(resultado.channels() == 3)
-                {
-                    cvtColor(
-                            resultado,
-                            resultado,
-                            COLOR_BGR2GRAY
-                    );
-                }
-
-                cout << "\nEscala de cinza aplicada!\n";
-
-                atualizarTela(
-                        original,
-                        resultado
-                );
-
-                break;
-            }
-
-            case 2:
-            {
-                ultimoEstado = resultado.clone();
-
-                resultado.convertTo(
-                        resultado,
-                        -1,
-                        1.2,
-                        0
-                );
-
-                cout << "\nContraste melhorado!\n";
-
-                atualizarTela(
-                        original,
-                        resultado
-                );
-
-                break;
-            }
-
-            case 3:
-            {
-                ultimoEstado = resultado.clone();
-
-                Mat cinza;
-
-                if(resultado.channels() == 3)
-                {
-                    cvtColor(
-                            resultado,
-                            cinza,
-                            COLOR_BGR2GRAY
-                    );
-                }
-                else
-                {
-                    cinza = resultado.clone();
-                }
-
-                adaptiveThreshold(
-                        cinza,
-                        resultado,
-                        255,
-                        ADAPTIVE_THRESH_GAUSSIAN_C,
-                        THRESH_BINARY,
-                        11,
-                        2
-                );
-
-                cout << "\nTexto destacado!\n";
-
-                atualizarTela(
-                        original,
-                        resultado
-                );
-
-                break;
-            }
-
-            case 4:
-            {
-                ultimoEstado = resultado.clone();
-
-                Mat kernel =
-                        (Mat_<float>(3,3) <<
-                         0,-1,0,
-                         -1,5,-1,
-                         0,-1,0);
-
-                filter2D(
-                        resultado,
-                        resultado,
-                        resultado.depth(),
-                        kernel
-                );
-
-                cout << "\nNitidez aplicada!\n";
-
-                atualizarTela(
-                        original,
-                        resultado
-                );
-
-                break;
-            }
-
-            case 5:
-            {
-                resultado = ultimoEstado.clone();
-
-                cout << "\nUltima acao desfeita!\n";
-
-                atualizarTela(
-                        original,
-                        resultado
-                );
-
-                break;
-            }
-
-            case 6:
-            {
-                filesystem::create_directories(
-                        "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas"
-                );
-
-                string caminho =
-                        gerarNomeArquivo();
-
-                if(imwrite(
-                        caminho,
-                        resultado
-                ))
-                {
-                    cout << "\n==================================\n";
-                    cout << "Imagem salva com sucesso!\n\n";
-                    cout << "Arquivo salvo em:\n";
-                    cout << caminho << endl;
-                    cout << "==================================\n";
-                }
-                else
-                {
-                    cout << "\nErro ao salvar imagem!\n";
-                }
-
-                break;
-            }
-
-            case 0:
-            {
-                cout << "\nEncerrando programa...\n";
-                break;
-            }
-
-            default:
-            {
-                cout << "\nOpcao invalida!\n";
-            }
+            break;
         }
 
-    } while(opcao != 0);
+        // C = Escala de cinza
+        else if(tecla == 'c' || tecla == 'C')
+        {
+            ultimoEstado = resultado.clone();
+
+            if(resultado.channels() == 3)
+            {
+                cvtColor(
+                        resultado,
+                        resultado,
+                        COLOR_BGR2GRAY);
+            }
+
+            definirMensagem("Escala de cinza aplicada!");
+
+            atualizarTela(
+                    original,
+                    resultado);
+        }
+
+        // K = Contraste
+        else if(tecla == 'k' || tecla == 'K')
+        {
+            ultimoEstado = resultado.clone();
+
+            resultado.convertTo(
+                    resultado,
+                    -1,
+                    1.2,
+                    0);
+
+            definirMensagem("Contraste aplicado!");
+
+            atualizarTela(
+                    original,
+                    resultado);
+        }
+
+        // T = Destacar texto
+        else if(tecla == 't' || tecla == 'T')
+        {
+            ultimoEstado = resultado.clone();
+
+            Mat cinza;
+
+            if(resultado.channels() == 3)
+            {
+                cvtColor(
+                        resultado,
+                        cinza,
+                        COLOR_BGR2GRAY);
+            }
+            else
+            {
+                cinza = resultado.clone();
+            }
+
+            adaptiveThreshold(
+                    cinza,
+                    resultado,
+                    255,
+                    ADAPTIVE_THRESH_GAUSSIAN_C,
+                    THRESH_BINARY,
+                    11,
+                    2);
+
+            definirMensagem("Texto destacado!");
+
+            atualizarTela(
+                    original,
+                    resultado);
+        }
+
+        // N = Nitidez
+        else if(tecla == 'n' || tecla == 'N')
+        {
+            ultimoEstado = resultado.clone();
+
+            Mat kernel =
+                    (Mat_<float>(3,3) <<
+                     0,-1,0,
+                     -1,5,-1,
+                     0,-1,0);
+
+            filter2D(
+                    resultado,
+                    resultado,
+                    resultado.depth(),
+                    kernel);
+
+            definirMensagem("Nitidez aplicada!");
+
+            atualizarTela(
+                    original,
+                    resultado);
+        }
+
+        // Z = Desfazer
+        else if(tecla == 'z' || tecla == 'Z')
+        {
+            resultado = ultimoEstado.clone();
+
+            definirMensagem("Ultima acao desfeita!");
+
+            atualizarTela(
+                    original,
+                    resultado);
+        }
+
+        // R = Restaurar original
+        else if(tecla == 'r' || tecla == 'R')
+        {
+            resultado = original.clone();
+
+            definirMensagem("Imagem restaurada!");
+
+            atualizarTela(
+                    original,
+                    resultado);
+        }
+
+        // S = Salvar
+        else if(tecla == 's' || tecla == 'S')
+        {
+            filesystem::create_directories(
+                    "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas");
+
+            string caminho =
+                    gerarNomeArquivo();
+
+            if(imwrite(
+                    caminho,
+                    resultado))
+            {
+                definirMensagem("Imagem salva com sucesso!");
+            }
+            else
+            {
+                definirMensagem("Erro ao salvar imagem!");
+            }
+
+            atualizarTela(
+                    original,
+                    resultado);
+        }
+    }
 
     destroyAllWindows();
 
