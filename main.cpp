@@ -20,53 +20,88 @@ void mostrarMenu() {
     cout << "Escolha: ";
 }
 
-void mostrarComparacao(const Mat& original,
-                       const Mat& resultado)
+void atualizarTela(const Mat& original,
+                   const Mat& resultado)
 {
-    Mat originalExibir;
-    Mat resultadoExibir;
+    Mat esquerda;
+    Mat direita;
 
     if (original.channels() == 1)
-        cvtColor(original, originalExibir, COLOR_GRAY2BGR);
+        cvtColor(original, esquerda, COLOR_GRAY2BGR);
     else
-        originalExibir = original;
+        esquerda = original.clone();
 
     if (resultado.channels() == 1)
-        cvtColor(resultado, resultadoExibir, COLOR_GRAY2BGR);
+        cvtColor(resultado, direita, COLOR_GRAY2BGR);
     else
-        resultadoExibir = resultado;
+        direita = resultado.clone();
 
-    resize(originalExibir,
-           originalExibir,
-           Size(),
-           0.5,
-           0.5);
+    resize(
+            esquerda,
+            esquerda,
+            Size(),
+            0.5,
+            0.5
+    );
 
-    resize(resultadoExibir,
-           resultadoExibir,
-           Size(),
-           0.5,
-           0.5);
+    resize(
+            direita,
+            direita,
+            Size(),
+            0.5,
+            0.5
+    );
+
+    copyMakeBorder(
+            esquerda,
+            esquerda,
+            60, 0, 0, 0,
+            BORDER_CONSTANT,
+            Scalar(0,0,0)
+    );
+
+    copyMakeBorder(
+            direita,
+            direita,
+            60, 0, 0, 0,
+            BORDER_CONSTANT,
+            Scalar(0,0,0)
+    );
+
+    putText(
+            esquerda,
+            "IMAGEM ORIGINAL",
+            Point(20,40),
+            FONT_HERSHEY_SIMPLEX,
+            0.9,
+            Scalar(0,255,0),
+            2
+    );
+
+    putText(
+            direita,
+            "IMAGEM MODIFICADA",
+            Point(20,40),
+            FONT_HERSHEY_SIMPLEX,
+            0.9,
+            Scalar(0,255,0),
+            2
+    );
 
     Mat comparacao;
 
-    hconcat(originalExibir,
-            resultadoExibir,
-            comparacao);
-
-    namedWindow(
-            "Original | Resultado",
-            WINDOW_NORMAL
-    );
-
-    imshow(
-            "Original | Resultado",
+    hconcat(
+            esquerda,
+            direita,
             comparacao
     );
 
-    waitKey(2000);
+    imshow(
+            "Melhorador de Documentos",
+            comparacao
+    );
 
-    destroyAllWindows();
+    waitKey(1);
 }
 
 string gerarNomeArquivo()
@@ -95,57 +130,53 @@ string gerarNomeArquivo()
     return ss.str();
 }
 
-int main() {
-
+int main()
+{
     Mat original = imread(
             "C:/Users/Luiz Fernandes/Pictures/PROVA/TESTE.png"
     );
 
-    if (original.empty()) {
+    if(original.empty())
+    {
         cout << "Erro ao carregar imagem!" << endl;
         return 1;
     }
 
     cout << "\n==================================\n";
     cout << "Documento carregado com sucesso!\n";
-    cout << "Largura: "
-         << original.cols
-         << " px\n";
-
-    cout << "Altura: "
-         << original.rows
-         << " px\n";
+    cout << "Largura: " << original.cols << " px\n";
+    cout << "Altura: " << original.rows << " px\n";
     cout << "==================================\n";
 
-    namedWindow(
-            "Imagem Carregada",
-            WINDOW_NORMAL
-    );
-
-    imshow(
-            "Imagem Carregada",
-            original
-    );
-
-    waitKey(2000);
-
-    destroyAllWindows();
-
     Mat resultado = original.clone();
-
     Mat ultimoEstado = resultado.clone();
+
+    namedWindow(
+        "Melhorador de Documentos",
+        WINDOW_NORMAL
+);
+
+    resizeWindow(
+            "Melhorador de Documentos",
+            1400,
+            800
+    );
+    atualizarTela(
+            original,
+            resultado
+    );
 
     int opcao;
 
-    do {
-
+    do
+    {
         mostrarMenu();
         cin >> opcao;
 
-        switch(opcao) {
-
-            case 1: {
-
+        switch(opcao)
+        {
+            case 1:
+            {
                 ultimoEstado = resultado.clone();
 
                 if(resultado.channels() == 3)
@@ -159,7 +190,7 @@ int main() {
 
                 cout << "\nEscala de cinza aplicada!\n";
 
-                mostrarComparacao(
+                atualizarTela(
                         original,
                         resultado
                 );
@@ -167,8 +198,8 @@ int main() {
                 break;
             }
 
-            case 2: {
-
+            case 2:
+            {
                 ultimoEstado = resultado.clone();
 
                 resultado.convertTo(
@@ -180,7 +211,7 @@ int main() {
 
                 cout << "\nContraste melhorado!\n";
 
-                mostrarComparacao(
+                atualizarTela(
                         original,
                         resultado
                 );
@@ -188,8 +219,8 @@ int main() {
                 break;
             }
 
-            case 3: {
-
+            case 3:
+            {
                 ultimoEstado = resultado.clone();
 
                 Mat cinza;
@@ -219,7 +250,7 @@ int main() {
 
                 cout << "\nTexto destacado!\n";
 
-                mostrarComparacao(
+                atualizarTela(
                         original,
                         resultado
                 );
@@ -227,8 +258,8 @@ int main() {
                 break;
             }
 
-            case 4: {
-
+            case 4:
+            {
                 ultimoEstado = resultado.clone();
 
                 Mat kernel =
@@ -246,7 +277,7 @@ int main() {
 
                 cout << "\nNitidez aplicada!\n";
 
-                mostrarComparacao(
+                atualizarTela(
                         original,
                         resultado
                 );
@@ -254,14 +285,13 @@ int main() {
                 break;
             }
 
-            case 5: {
-
-                resultado =
-                        ultimoEstado.clone();
+            case 5:
+            {
+                resultado = ultimoEstado.clone();
 
                 cout << "\nUltima acao desfeita!\n";
 
-                mostrarComparacao(
+                atualizarTela(
                         original,
                         resultado
                 );
@@ -269,8 +299,8 @@ int main() {
                 break;
             }
 
-            case 6: {
-
+            case 6:
+            {
                 filesystem::create_directories(
                         "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas"
                 );
@@ -280,11 +310,12 @@ int main() {
 
                 if(imwrite(
                         caminho,
-                        resultado))
+                        resultado
+                ))
                 {
                     cout << "\n==================================\n";
                     cout << "Imagem salva com sucesso!\n\n";
-                    cout << "Arquivo:\n";
+                    cout << "Arquivo salvo em:\n";
                     cout << caminho << endl;
                     cout << "==================================\n";
                 }
@@ -297,16 +328,20 @@ int main() {
             }
 
             case 0:
-
+            {
                 cout << "\nEncerrando programa...\n";
                 break;
+            }
 
             default:
-
+            {
                 cout << "\nOpcao invalida!\n";
+            }
         }
 
     } while(opcao != 0);
+
+    destroyAllWindows();
 
     return 0;
 }
