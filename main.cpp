@@ -1,118 +1,421 @@
 #include <opencv2/opencv.hpp>
+#include <windows.h>
+#include <commdlg.h>
+
 #include <iostream>
-#include <filesystem>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
+#include <string>
+
+#include "ProcessadorImagem.h"
 
 using namespace cv;
 using namespace std;
 
-// Mensagem exibida na tela
-string mensagemStatus = "Documento carregado com sucesso!";
 
-// Instante em que a mensagem foi atualizada
-time_t tempoMensagem = time(nullptr);
+// =====================
+// VARIÁVEIS GLOBAIS
+// =====================
 
-// Atualiza a mensagem exibida na janela
-void definirMensagem(const string& mensagem)
+string mensagemStatus = "";
+
+Scalar corMensagem =
+        Scalar(0,255,0);
+
+
+// =====================
+// DEFINIR MENSAGEM
+// =====================
+
+void definirMensagem(
+        const string& texto,
+        Scalar cor)
 {
-    mensagemStatus = mensagem;
-    tempoMensagem = time(nullptr);
+        mensagemStatus =
+                texto;
+
+        corMensagem =
+                cor;
 }
 
-// Gera automaticamente o nome do arquivo com data e hora
-string gerarNomeArquivo()
+
+// =====================
+// ABRIR IMAGEM
+// =====================
+
+string abrirImagem()
 {
-    auto agora = time(nullptr);
+        OPENFILENAME ofn;
 
-    tm tempoLocal{};
+        char arquivo[260] = "";
 
-#ifdef _WIN32
-    localtime_s(&tempoLocal, &agora);
-#else
-    localtime_r(&agora, &tempoLocal);
-#endif
+        ZeroMemory(
+                &ofn,
+                sizeof(ofn));
 
-    stringstream ss;
+        ofn.lStructSize =
+                sizeof(ofn);
 
-    ss << "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas/";
+        ofn.hwndOwner =
+                NULL;
 
-    ss << "resultado_"
-       << put_time(
-              &tempoLocal,
-              "%Y-%m-%d_%H-%M-%S")
-       << ".png";
+        ofn.lpstrFile =
+                arquivo;
 
-    return ss.str();
+        ofn.nMaxFile =
+                sizeof(arquivo);
+
+        ofn.lpstrFilter =
+                "Imagens\0*.png;*.jpg;*.jpeg;*.bmp\0";
+
+        ofn.nFilterIndex =
+                1;
+
+        ofn.Flags =
+                OFN_PATHMUSTEXIST |
+                OFN_FILEMUSTEXIST;
+
+        if(GetOpenFileName(&ofn))
+        {
+                return string(
+                        arquivo);
+        }
+        else
+        {
+                MessageBoxA(
+                        NULL,
+                        "A janela de selecao falhou.",
+                        "DEBUG",
+                        MB_OK);
+        }
+
+        return "";
 }
-void atualizarTela(const Mat& original,
-                   const Mat& resultado)
+
+
+// =====================
+// ESCOLHER ONDE SALVAR
+// =====================
+
+string escolherSalvar()
+{
+        OPENFILENAME ofn;
+
+        char arquivo[260] = "";
+
+        ZeroMemory(
+                &ofn,
+                sizeof(ofn));
+
+        ofn.lStructSize =
+                sizeof(ofn);
+
+        ofn.hwndOwner =
+                NULL;
+
+        ofn.lpstrFile =
+                arquivo;
+
+        ofn.nMaxFile =
+                sizeof(arquivo);
+
+        ofn.lpstrFilter =
+                "PNG (*.png)\0*.png\0"
+                "JPEG (*.jpg)\0*.jpg\0"
+                "BMP (*.bmp)\0*.bmp\0";
+
+        ofn.lpstrDefExt =
+                "png";
+
+        ofn.Flags =
+                OFN_OVERWRITEPROMPT;
+
+        if(GetSaveFileName(&ofn))
+        {
+                return string(
+                        arquivo);
+        }
+
+        return "";
+}
+// =====================
+// LEGENDA DOS COMANDOS
+// =====================
+
+void desenharLegenda(Mat& tela)
+{
+    int y = tela.rows - 210;
+
+    putText(
+            tela,
+            "COMANDOS:",
+            Point(30, y),
+            FONT_HERSHEY_DUPLEX,
+            0.9,
+            Scalar(0,255,255),
+            2,
+            LINE_AA);
+
+    y += 40;
+
+    putText(
+            tela,
+            "[A] Abrir Imagem",
+            Point(30, y),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[C] Escala de Cinza",
+            Point(30, y + 40),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[B] Melhorar Contraste",
+            Point(30, y + 80),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[T] Destacar Texto",
+            Point(30, y + 120),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[N] Aplicar Nitidez",
+            Point(450, y),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[E] Escanear Documento",
+            Point(450, y + 40),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[Z] Desfazer",
+            Point(450, y + 80),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[R] Restaurar Original",
+            Point(450, y + 120),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[S] Salvar Imagem",
+            Point(900, y),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(255,255,255),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "[ESC] Fechar Programa",
+            Point(900, y + 40),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(0,255,255),
+            1,
+            LINE_AA);
+}
+
+
+
+// =====================
+// TELA INICIAL
+// =====================
+
+void mostrarTelaInicial()
+{
+    Mat tela(
+            850,
+            1400,
+            CV_8UC3,
+            Scalar(40,40,40));
+
+    putText(
+            tela,
+            "BETTERDOCS",
+            Point(500,120),
+            FONT_HERSHEY_DUPLEX,
+            1.8,
+            Scalar(255,255,255),
+            3,
+            LINE_AA);
+
+    rectangle(
+            tela,
+            Point(120,180),
+            Point(1280,420),
+            Scalar(80,80,80),
+            2);
+
+    putText(
+            tela,
+            "PRESSIONE A PARA ABRIR UMA IMAGEM",
+            Point(220,260),
+            FONT_HERSHEY_DUPLEX,
+            1.0,
+            Scalar(0,255,0),
+            2,
+            LINE_AA);
+
+    putText(
+            tela,
+            "Selecione a imagem desejada usando o Explorador de Arquivos do Windows",
+            Point(140,330),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(220,220,220),
+            1,
+            LINE_AA);
+
+    putText(
+            tela,
+            "Depois utilize os filtros para melhorar a qualidade do documento.",
+            Point(180,380),
+            FONT_HERSHEY_DUPLEX,
+            0.8,
+            Scalar(220,220,220),
+            1,
+            LINE_AA);
+
+    desenharLegenda(tela);
+
+    imshow(
+            "BetterDocs",
+            tela);
+}
+// =====================
+// ATUALIZAR TELA
+// =====================
+
+void atualizarTela(
+        const Mat& original,
+        const Mat& resultado)
 {
     Mat esquerda;
     Mat direita;
 
-    // Converte para BGR se estiver em escala de cinza
+    // Converte para colorido caso esteja em cinza
     if(original.channels() == 1)
-        cvtColor(original, esquerda, COLOR_GRAY2BGR);
+    {
+        cvtColor(
+                original,
+                esquerda,
+                COLOR_GRAY2BGR);
+    }
     else
-        esquerda = original.clone();
+    {
+        esquerda =
+                original.clone();
+    }
 
     if(resultado.channels() == 1)
-        cvtColor(resultado, direita, COLOR_GRAY2BGR);
+    {
+        cvtColor(
+                resultado,
+                direita,
+                COLOR_GRAY2BGR);
+    }
     else
-        direita = resultado.clone();
+    {
+        direita =
+                resultado.clone();
+    }
 
-    // Reduz tamanho das imagens
     resize(
             esquerda,
             esquerda,
             Size(),
-            0.5,
-            0.5);
+            0.45,
+            0.45);
 
     resize(
             direita,
             direita,
             Size(),
-            0.5,
-            0.5);
+            0.45,
+            0.45);
 
-    // Espaço superior para os títulos
     copyMakeBorder(
             esquerda,
             esquerda,
-            60,0,0,0,
+            60,
+            0,
+            0,
+            0,
             BORDER_CONSTANT,
             Scalar(0,0,0));
 
     copyMakeBorder(
             direita,
             direita,
-            60,0,0,0,
+            60,
+            0,
+            0,
+            0,
             BORDER_CONSTANT,
             Scalar(0,0,0));
 
-    // Títulos
     putText(
             esquerda,
             "IMAGEM ORIGINAL",
             Point(20,40),
-            FONT_HERSHEY_SIMPLEX,
+            FONT_HERSHEY_DUPLEX,
             0.9,
             Scalar(0,255,0),
-            2);
+            2,
+            LINE_AA);
 
     putText(
             direita,
             "IMAGEM MODIFICADA",
             Point(20,40),
-            FONT_HERSHEY_SIMPLEX,
+            FONT_HERSHEY_DUPLEX,
             0.9,
             Scalar(0,255,0),
-            2);
+            2,
+            LINE_AA);
 
-    // Junta as duas imagens
     Mat comparacao;
 
     hconcat(
@@ -120,232 +423,287 @@ void atualizarTela(const Mat& original,
             direita,
             comparacao);
 
-    // Barra inferior
     copyMakeBorder(
             comparacao,
             comparacao,
             0,
-            120,
+            240,
             0,
             0,
             BORDER_CONSTANT,
-            Scalar(20,20,20));
+            Scalar(35,35,35));
 
-    // Mensagem de status
-    putText(
-            comparacao,
-            mensagemStatus,
-            Point(20, comparacao.rows - 80),
-            FONT_HERSHEY_SIMPLEX,
-            0.8,
-            Scalar(0,255,255),
-            2);
-
-    // Primeira linha dos atalhos
-    putText(
-            comparacao,
-            "[C] Cinza   [K] Contraste   [T] Texto   [N] Nitidez",
-            Point(20, comparacao.rows - 45),
-            FONT_HERSHEY_SIMPLEX,
-            0.7,
-            Scalar(255,255,255),
-            2);
-
-    // Segunda linha dos atalhos
-    putText(
-            comparacao,
-            "[Z] Desfazer   [R] Restaurar   [S] Salvar   [ESC] Sair",
-            Point(20, comparacao.rows - 15),
-            FONT_HERSHEY_SIMPLEX,
-            0.7,
-            Scalar(255,255,255),
-            2);
-
-    imshow(
-            "Melhorador de Documentos",
+    desenharLegenda(
             comparacao);
-}
-int main()
-{
-    Mat original = imread(
-            "C:/Users/Luiz Fernandes/Pictures/PROVA/TESTE.png");
 
-    if(original.empty())
+    if(!mensagemStatus.empty())
     {
-        cout << "Erro ao carregar imagem!" << endl;
-        return 1;
+        putText(
+                comparacao,
+                mensagemStatus,
+                Point(
+                        20,
+                        comparacao.rows - 20),
+                FONT_HERSHEY_DUPLEX,
+                0.8,
+                corMensagem,
+                2,
+                LINE_AA);
     }
 
-    Mat resultado = original.clone();
-    Mat ultimoEstado = resultado.clone();
+    imshow(
+            "BetterDocs",
+            comparacao);
+}
+
+
+
+// =====================
+// SALVAR IMAGEM
+// =====================
+
+void salvarImagem(
+        const Mat& resultado)
+{
+    string caminho =
+            escolherSalvar();
+
+    if(caminho.empty())
+    {
+        definirMensagem(
+                "Salvamento cancelado!",
+                Scalar(0,255,255));
+
+        return;
+    }
+
+    bool sucesso =
+            imwrite(
+                    caminho,
+                    resultado);
+
+    if(sucesso)
+    {
+        definirMensagem(
+                "Imagem salva com sucesso!",
+                Scalar(0,255,0));
+
+        cout << "\n=================================\n";
+        cout << "ARQUIVO SALVO COM SUCESSO\n";
+        cout << caminho << endl;
+        cout << "=================================\n";
+    }
+    else
+    {
+        definirMensagem(
+                "Erro ao salvar imagem!",
+                Scalar(0,0,255));
+    }
+}
+// =====================
+// MAIN
+// =====================
+
+int main()
+{
+    ProcessadorImagem processador;
+
+    Mat original;
+    Mat resultado;
 
     namedWindow(
-            "Melhorador de Documentos",
+            "BetterDocs",
             WINDOW_NORMAL);
 
     resizeWindow(
-            "Melhorador de Documentos",
+            "BetterDocs",
             1400,
-            800);
+            850);
 
-    atualizarTela(
-            original,
-            resultado);
+    mostrarTelaInicial();
 
     while(true)
     {
-        int tecla = waitKey(30);
+        int tecla =
+                waitKey(30);
 
-        // ESC = sair
+        // ESC
         if(tecla == 27)
         {
             break;
         }
 
-        // C = Escala de cinza
-        else if(tecla == 'c' || tecla == 'C')
+        // A = Abrir imagem
+        else if(
+                tecla == 'a' ||
+                tecla == 'A')
         {
-            ultimoEstado = resultado.clone();
-
-            if(resultado.channels() == 3)
-            {
-                cvtColor(
-                        resultado,
-                        resultado,
-                        COLOR_BGR2GRAY);
-            }
-
-            definirMensagem("Escala de cinza aplicada!");
-
-            atualizarTela(
-                    original,
-                    resultado);
-        }
-
-        // K = Contraste
-        else if(tecla == 'k' || tecla == 'K')
-        {
-            ultimoEstado = resultado.clone();
-
-            resultado.convertTo(
-                    resultado,
-                    -1,
-                    1.2,
-                    0);
-
-            definirMensagem("Contraste aplicado!");
-
-            atualizarTela(
-                    original,
-                    resultado);
-        }
-
-        // T = Destacar texto
-        else if(tecla == 't' || tecla == 'T')
-        {
-            ultimoEstado = resultado.clone();
-
-            Mat cinza;
-
-            if(resultado.channels() == 3)
-            {
-                cvtColor(
-                        resultado,
-                        cinza,
-                        COLOR_BGR2GRAY);
-            }
-            else
-            {
-                cinza = resultado.clone();
-            }
-
-            adaptiveThreshold(
-                    cinza,
-                    resultado,
-                    255,
-                    ADAPTIVE_THRESH_GAUSSIAN_C,
-                    THRESH_BINARY,
-                    11,
-                    2);
-
-            definirMensagem("Texto destacado!");
-
-            atualizarTela(
-                    original,
-                    resultado);
-        }
-
-        // N = Nitidez
-        else if(tecla == 'n' || tecla == 'N')
-        {
-            ultimoEstado = resultado.clone();
-
-            Mat kernel =
-                    (Mat_<float>(3,3) <<
-                     0,-1,0,
-                     -1,5,-1,
-                     0,-1,0);
-
-            filter2D(
-                    resultado,
-                    resultado,
-                    resultado.depth(),
-                    kernel);
-
-            definirMensagem("Nitidez aplicada!");
-
-            atualizarTela(
-                    original,
-                    resultado);
-        }
-
-        // Z = Desfazer
-        else if(tecla == 'z' || tecla == 'Z')
-        {
-            resultado = ultimoEstado.clone();
-
-            definirMensagem("Ultima acao desfeita!");
-
-            atualizarTela(
-                    original,
-                    resultado);
-        }
-
-        // R = Restaurar original
-        else if(tecla == 'r' || tecla == 'R')
-        {
-            resultado = original.clone();
-
-            definirMensagem("Imagem restaurada!");
-
-            atualizarTela(
-                    original,
-                    resultado);
-        }
-
-        // S = Salvar
-        else if(tecla == 's' || tecla == 'S')
-        {
-            filesystem::create_directories(
-                    "C:/Users/Luiz Fernandes/Pictures/PROVA/Saidas");
-
             string caminho =
-                    gerarNomeArquivo();
+                    abrirImagem();
 
-            if(imwrite(
-                    caminho,
-                    resultado))
+            if(!caminho.empty())
             {
-                definirMensagem("Imagem salva com sucesso!");
+                original =
+                        imread(caminho);
+
+                if(!original.empty())
+                {
+                    resultado =
+                            original.clone();
+
+                    definirMensagem(
+                            "Imagem carregada com sucesso!",
+                            Scalar(0,255,0));
+
+                    atualizarTela(
+                            original,
+                            resultado);
+                }
+                else
+                {
+                    definirMensagem(
+                            "Erro ao carregar imagem!",
+                            Scalar(0,0,255));
+
+                    mostrarTelaInicial();
+                }
             }
-            else
+        }
+
+        // Executa apenas se existir imagem carregada
+        if(!original.empty())
+        {
+            // C = Cinza
+            if(
+                    tecla == 'c' ||
+                    tecla == 'C')
             {
-                definirMensagem("Erro ao salvar imagem!");
+                processador.aplicarCinza(
+                        resultado);
+
+                definirMensagem(
+                        "Escala de cinza aplicada!",
+                        Scalar(0,255,0));
+
+                atualizarTela(
+                        original,
+                        resultado);
             }
 
-            atualizarTela(
-                    original,
-                    resultado);
+            // B = Contraste
+            else if(
+                    tecla == 'b' ||
+                    tecla == 'B')
+            {
+                processador.aplicarContraste(
+                        resultado);
+
+                definirMensagem(
+                        "Contraste melhorado!",
+                        Scalar(0,255,0));
+
+                atualizarTela(
+                        original,
+                        resultado);
+            }
+
+            // T = Texto
+            else if(
+                    tecla == 't' ||
+                    tecla == 'T')
+            {
+                processador.destacarTexto(
+                        resultado);
+
+                definirMensagem(
+                        "Texto destacado!",
+                        Scalar(0,255,0));
+
+                atualizarTela(
+                        original,
+                        resultado);
+            }
+
+            // N = Nitidez
+            else if(
+                    tecla == 'n' ||
+                    tecla == 'N')
+            {
+                processador.aplicarNitidez(
+                        resultado);
+
+                definirMensagem(
+                        "Nitidez aplicada!",
+                        Scalar(0,255,0));
+
+                atualizarTela(
+                        original,
+                        resultado);
+            }
+
+            // E = Escanear Documento
+            else if(
+                    tecla == 'e' ||
+                    tecla == 'E')
+            {
+                processador.escanearDocumento(
+                        resultado);
+
+                definirMensagem(
+                        "Documento escaneado!",
+                        Scalar(0,255,0));
+
+                atualizarTela(
+                        original,
+                        resultado);
+            }
+
+            // Z = Desfazer
+            else if(
+                    tecla == 'z' ||
+                    tecla == 'Z')
+            {
+                processador.desfazer(
+                        resultado);
+
+                definirMensagem(
+                        "Ultima acao desfeita!",
+                        Scalar(0,255,255));
+
+                atualizarTela(
+                        original,
+                        resultado);
+            }
+
+            // R = Restaurar Original
+            else if(
+                    tecla == 'r' ||
+                    tecla == 'R')
+            {
+                resultado =
+                        original.clone();
+
+                definirMensagem(
+                        "Imagem restaurada!",
+                        Scalar(255,255,0));
+
+                atualizarTela(
+                        original,
+                        resultado);
+            }
+
+            // S = Salvar
+            else if(
+                    tecla == 's' ||
+                    tecla == 'S')
+            {
+                salvarImagem(
+                        resultado);
+
+                atualizarTela(
+                        original,
+                        resultado);
+            }
         }
     }
 
